@@ -9,7 +9,7 @@ import re
 import string
 
 # read in data
-reviews = pd.read_csv('data/parsed_reviews.csv')
+reviews = pd.read_csv('../data/parsed_reviews.csv')
 
 
 # convert nltk tags to wordnet tags
@@ -78,4 +78,4 @@ def process_text(text):
 
 # Preprocess review text and replace
 reviews['Review'] = reviews['Review'].apply(process_text)
-reviews.to_csv('data/preprocessed_reviews.csv', index=False, encoding='utf-8')
+reviews.to_csv('../data/preprocessed_reviews.csv', index=False, encoding='utf-8')

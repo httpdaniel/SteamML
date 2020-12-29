@@ -2,7 +2,7 @@
 import pandas as pd
 
 # read in csv
-reviews = pd.read_csv('data/preprocessed_reviews.csv')
+reviews = pd.read_csv('../data/preprocessed_reviews.csv')
 
 # add length column
 reviews['Review'] = reviews['Review'].astype(str)
@@ -18,4 +18,4 @@ encoded = encoded.drop(['Recommended False', 'Early Access False'], axis=1)
 encoded = encoded.rename(columns={'Recommended True': 'Recommended', 'Early Access True': 'Early Access'})
 
 # save to csv
-encoded.to_csv('data/transformed_reviews.csv', index=False, encoding='utf-8')
+encoded.to_csv('../data/transformed_reviews.csv', index=False, encoding='utf-8')
