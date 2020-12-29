@@ -12,5 +12,10 @@ reviews['Length'] = reviews['Review'].apply(lambda x: len(x.split()))
 encoded = pd.get_dummies(reviews, prefix=['Recommended', 'Early Access'],
                          columns=['Recommended', 'Early Access'], prefix_sep=" ")
 
+encoded = encoded.drop(['Recommended False', 'Early Access False'], axis=1)
+
+# rename columns
+encoded = encoded.rename(columns={'Recommended True': 'Recommended', 'Early Access True': 'Early Access'})
+
 # save to csv
 encoded.to_csv('data/transformed_reviews.csv', index=False, encoding='utf-8')
