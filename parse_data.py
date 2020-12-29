@@ -18,4 +18,3 @@ with open('data/steam_reviews.jl', 'rb') as f:
 reviews = json.dumps(parsed_reviews, indent=4)
 df = pd.read_json(reviews)
 df.to_csv('data/parsed_reviews.csv', index=False, encoding='utf-8')
-
