@@ -26,11 +26,29 @@ def nltk_tag_to_wordnet_tag(nltk_tag):
         return None
 
 
-# remove numbers, punctuation, and make lowercase
+# remove numbers, punctuation, emojis, and make lowercase
 def clean_text(text):
     no_numbers = re.sub(r'\d+', '', text)
     no_punctuation = "".join([char.lower() for char in no_numbers if char not in string.punctuation])
-    return no_punctuation
+
+    patterns = re.compile(pattern="["u"\U0001F600-\U0001F64F"  # emoticons
+                                     u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                                     u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                                     u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                                     u"\U00002702-\U000027B0"  # emoticons
+                                     u"\U0001f926-\U0001f937"  # emoticons
+                                     u"\U00010000-\U0010ffff"  # emoticons
+                                     u"\u2640-\u2642"  # dingbats
+                                     u"\u2600-\u2B55"  # dingbats
+                                     u"\u200d"  # dingbats
+                                     u"\u23cf"  # dingbats
+                                     u"\u23e9"  # dingbats
+                                     u"\u231a"  # dingbats
+                                     u"\ufe0f"  # dingbats
+                                     u"\u3030"  # dingbats
+                                     "]+", flags=re.UNICODE)
+
+    return patterns.sub(r'', no_punctuation)
 
 
 # perform tokenization, stopword removal and lemmatization
@@ -58,6 +76,6 @@ def process_text(text):
     return sentence
 
 
-# Pre-process review text and replace
+# Preprocess review text and replace
 reviews['Review'] = reviews['Review'].apply(process_text)
 reviews.to_csv('data/preprocessed_reviews.csv', index=False, encoding='utf-8')
