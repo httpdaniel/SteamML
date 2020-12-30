@@ -1,5 +1,5 @@
 # import packages
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -10,9 +10,15 @@ reviews = pd.read_csv('../data/transformed_reviews.csv')
 recommended = reviews[reviews['Recommended'] == 1]
 not_recommended = reviews[reviews['Recommended'] == 0]
 
-vectorizer = CountVectorizer(ngram_range=(2, 2), stop_words=['game', 'oyun', 'monika', 'que', 'show', 'juego',
-                                                             'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как']
-                             ).fit(reviews['Review'].values.astype('U'))
+count_vectorizer = CountVectorizer(ngram_range=(2, 2), stop_words=['game', 'oyun', 'monika', 'que', 'show', 'juego',
+                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как', 'well']
+                                   ).fit(reviews['Review'].values.astype('U'))
+
+tfidf_vectorizer = TfidfVectorizer(ngram_range=(2, 2), stop_words=['game', 'oyun', 'monika', 'que', 'show', 'juego',
+                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как', 'well'],
+                                   max_df=0.9, use_idf=True)
+
+tfidf_vectorizer.fit(reviews['Review'].values.astype('U'))
 
 
 # plot histograms - word count
@@ -29,12 +35,12 @@ def word_count(rec, not_rec):
 # find most common bi-grams
 def bigram_common(text):
 
-    words = vectorizer.transform(text)
+    words = count_vectorizer.transform(text)
     sum_words = words.sum(axis=0)
 
     ngram_count = []
 
-    for word, index in vectorizer.vocabulary_.items():
+    for word, index in count_vectorizer.vocabulary_.items():
         ngram_count.append((word, sum_words[0, index]))
 
     sorted_ngram_count = sorted(ngram_count, key=lambda z: z[1], reverse=True)
@@ -57,6 +63,17 @@ def bigram_common(text):
     fig.show()
 
 
+# tf-idf
+def tf_idf(text):
+    vect = tfidf_vectorizer.transform(text)
+    x_tfidf = vect[0]
+    df = pd.DataFrame(x_tfidf.T.todense(), index=tfidf_vectorizer.get_feature_names(), columns=['tfidf'])
+    df = df.sort_values(by=["tfidf"], ascending=False)
+    print(df.head(20))
+
+
 word_count(recommended, not_recommended)
 bigram_common(recommended['Review'].values.astype('U'))
 bigram_common(not_recommended['Review'].values.astype('U'))
+tf_idf(recommended['Review'].values.astype('U'))
+tf_idf(not_recommended['Review'].values.astype('U'))
