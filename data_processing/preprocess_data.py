@@ -56,6 +56,15 @@ def process_text(text):
     text = clean_text(text)
     word_tokens = word_tokenize(text)
     stop_words = set(stopwords.words('english'))
+    turkish = stopwords.words('turkish')
+    russian = stopwords.words('russian')
+    spanish = stopwords.words('spanish')
+    portuguese = stopwords.words('portuguese')
+    german = stopwords.words('german')
+    french = stopwords.words('french')
+    italian = stopwords.words('italian')
+    stop_words = stop_words.union(turkish, russian, spanish, portuguese, german, french,
+                                  italian)
     filtered_sentence = []
 
     for word in word_tokens:
