@@ -10,13 +10,18 @@ reviews = pd.read_csv('../data/transformed_reviews.csv')
 recommended = reviews[reviews['Recommended'] == 1]
 not_recommended = reviews[reviews['Recommended'] == 0]
 
+# configure count vectorizer
 count_vectorizer = CountVectorizer(ngram_range=(2, 2), stop_words=['game', 'oyun', 'monika', 'que', 'show', 'juego',
-                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как', 'well']
-                                   ).fit(reviews['Review'].values.astype('U'))
+                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как',
+                                                                   'well']
+                                   )
 
+count_vectorizer.fit(reviews['Review'].values.astype('U'))
+
+# configure tf-idf vectorizer
 tfidf_vectorizer = TfidfVectorizer(ngram_range=(2, 2), stop_words=['game', 'oyun', 'monika', 'que', 'show', 'juego',
-                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как', 'well'],
-                                   max_df=0.9, use_idf=True)
+                                                                   'spiel', 'jogo', 'игра', 'игрy', 'jeu', 'как',
+                                                                   'well'], max_df=0.9, use_idf=True)
 
 tfidf_vectorizer.fit(reviews['Review'].values.astype('U'))
 
@@ -77,3 +82,8 @@ bigram_common(recommended['Review'].values.astype('U'))
 bigram_common(not_recommended['Review'].values.astype('U'))
 tf_idf(recommended['Review'].values.astype('U'))
 tf_idf(not_recommended['Review'].values.astype('U'))
+
+recc_av_length = recommended['Length'].mean()
+norecc_av_length = not_recommended['Length'].mean()
+print("Average length of recommended review: ", recc_av_length)
+print("Average length of not recommended review: ", norecc_av_length)
