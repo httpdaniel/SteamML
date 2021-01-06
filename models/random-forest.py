@@ -1,7 +1,7 @@
 # import packages
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, recall_score, precision_score, \
     roc_curve, f1_score, auc
 from scipy.sparse import csr_matrix, hstack
@@ -30,10 +30,35 @@ def get_data(csv, vect, target):
     return xtrain_final, xtest_final, ytrain, ytest
 
 
-# tune hyper-parameters using cross-validation
-def crossval(x, y):
-    clf = LogisticRegression(penalty='l2', max_iter=10000)
-    param_grid = {'C': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 3.7, 10, 100, 1000, 10000, 100000]}
+# tune hyper-parameters using cross-validation - random search
+def random_search(x, y):
+    clf = RandomForestClassifier()
+    param_grid = {'max_depth': [10, 25, 40, 55],
+                  'n_estimators': [100, 500, 1000, 1500],
+                  'max_features': ['auto'],
+                  'min_samples_leaf': [1, 2, 4],
+                  'min_samples_split': [2, 5, 10],
+                  }
+
+    rsearch = RandomizedSearchCV(clf, param_grid, n_iter=3, cv=5, scoring='accuracy', return_train_score=True,
+                                 random_state=42, n_jobs=-1)
+
+    rsearch.fit(x, y)
+
+    res = rsearch.cv_results_
+    params = rsearch.best_params_
+    return res, params
+
+
+# tune hyper-parameters using grid-validation
+def grid_search(x, y):
+    clf = RandomForestClassifier()
+    param_grid = {'max_depth': [35, 40, 45],
+                  'n_estimators': [900, 1000, 1100],
+                  'max_features': ['auto'],
+                  'min_samples_leaf': [1, 2],
+                  'min_samples_split': [9, 10, 11],
+                  }
 
     gsearch = GridSearchCV(clf, param_grid, cv=5, scoring='accuracy', return_train_score=True, n_jobs=-1)
 
@@ -119,20 +144,28 @@ def get_results(acc, aucs, rec, prec, f1s, total_time):
     res_df = pd.DataFrame([res], columns=['Accuracy', 'AUC Score', 'Recall', 'Precision', 'F1', 'Time Taken'])
     result = res_df.to_string()
 
-    print(result, file=open('../results/LogisticRegression_Results.txt', 'w'))
+    print(result, file=open('../results/RandomForest_Results.txt', 'w'))
 
 
 # vectorizer = CountVectorizer()
-vectorizer = TfidfVectorizer(max_df=0.5, max_features=None, ngram_range=[1, 1], sublinear_tf=False, use_idf=True)
+vectorizer = TfidfVectorizer(max_df=0.7, max_features=None, ngram_range=[1, 2], sublinear_tf=False, use_idf=True)
 
 X_train, X_test, y_train, y_test = get_data('../data/transformed_reviews.csv', vectorizer, 'Recommended')
 
-# cross-validation
-results, best_params = crossval(X_train, y_train)
+# cross-validation - random search
+# r_results, r_best_params = random_search(X_train, y_train)
+# {'n_estimators': 1000, 'min_samples_split': 10, 'min_samples_leaf': 1, 'max_features': 'auto', 'max_depth': 40}
+
+# cross-validation - grid search
+g_results, g_best_params = grid_search(X_train, y_train)
+# {'max_depth': 40, 'max_features': 'auto', 'min_samples_leaf': 2, 'min_samples_split': 11, 'n_estimators': 900}
 
 # final model
 start_time = time.time()
-model = LogisticRegression(penalty='l2', max_iter=10000, C=best_params["C"])
+model = RandomForestClassifier(max_features='auto', n_estimators=g_best_params['n_estimators'],
+                               min_samples_leaf=g_best_params['min_samples_leaf'],
+                               min_samples_split=g_best_params['min_samples_split'],
+                               n_jobs=-1, random_state=42)
 model.fit(X_train, y_train)
 
 # make predictions
