@@ -79,7 +79,7 @@ def evaluate(real, pred):
     fig, ax = plt.subplots(figsize=(10, 7))
     sn.heatmap(df_cm, annot=True, fmt='')
 
-    ax.set_title("Logistic Regression - Confusion Matrix\n")
+    ax.set_title("SVM - Confusion Matrix\n")
     ax.xaxis.tick_top()
     plt.show()
 
@@ -96,7 +96,7 @@ def evaluate(real, pred):
     roc_auc = auc(fpr, tpr)
 
     # plot roc curve
-    plt.title('Receiver Operating Characteristic')
+    plt.title('SVM - ROC Curves')
     plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
     plt.legend(loc='lower right')
     plt.plot([0, 1], [0, 1], 'r--')
