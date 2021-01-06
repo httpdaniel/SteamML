@@ -1,9 +1,9 @@
 # import packages
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, recall_score, precision_score, \
-    roc_curve, auc
+    roc_curve, f1_score, auc
 from scipy.sparse import csr_matrix, hstack
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,7 +19,7 @@ def get_data(csv, vect, target):
     Y = reviews[target]
     X = reviews.drop(['Recommended', 'Early Access'], axis=1)
 
-    xtrain, xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.3, random_state=42)
+    xtrain, xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.30, random_state=42)
 
     xtrain_t = vect.fit_transform(xtrain.Review)
     xtrain_final = hstack([xtrain_t, csr_matrix(xtrain.Length).T], 'csr')
@@ -61,6 +61,10 @@ def evaluate(real, pred):
     precision = precision_score(real, pred, average='weighted', zero_division=0)
     print("Precision: ", precision, "\n")
 
+    # F1
+    f1 = f1_score(real, pred, average='weighted', zero_division=0)
+    print("F1: ", f1, "\n")
+
     # find values for confusion matrix
     tn, fp, fn, tp = confusion_matrix(real, pred).ravel()
     print("--- Confusion Matrix--\n", tn, fp, fn, tp)
@@ -100,25 +104,29 @@ def evaluate(real, pred):
     plt.xlabel('False Positive Rate')
     plt.show()
 
-    return accscore, aucscore, recall, precision
+    return accscore, aucscore, recall, precision, f1
 
 
-def get_results(acc, aucs, rec, prec, total_time):
+def get_results(acc, aucs, rec, prec, f1s, total_time):
     res = {'Accuracy': acc,
            'AUC Score': aucs,
            'Recall': rec,
            'Precision': prec,
+           'F1': f1s,
            'Time Taken': total_time
            }
 
-    res_df = pd.DataFrame([res], columns=['Accuracy', 'AUC Score', 'Recall', 'Precision', 'Time Taken'])
+    res_df = pd.DataFrame([res], columns=['Accuracy', 'AUC Score', 'Recall', 'Precision', 'F1', 'Time Taken'])
     result = res_df.to_string()
 
     print(result, file=open('../results/NaiveBayes_Results.txt', 'w'))
 
 
+# {'mnb__alpha': 1, 'tfidf__max_df': 0.5, 'tfidf__max_features': None, 'tfidf__ngram_range': (1, 2),
+# 'tfidf__use_idf': True}
+
 # vectorizer = CountVectorizer()
-vectorizer = TfidfVectorizer()
+vectorizer = TfidfVectorizer(max_df=0.5, max_features=None, ngram_range=(1, 2), use_idf=True)
 
 X_train, X_test, y_train, y_test = get_data('../data/transformed_reviews.csv', vectorizer, 'Recommended')
 
@@ -136,7 +144,7 @@ end_time = time.time()
 time_taken = end_time - start_time
 
 # evaluate results
-acc_score, auc_score, model_recall, model_precision = evaluate(y_test, predictions)
+acc_score, auc_score, model_recall, model_precision, model_f1 = evaluate(y_test, predictions)
 
 # print results to file
-get_results(acc_score, auc_score, model_recall, model_precision, time_taken)
+get_results(acc_score, auc_score, model_recall, model_precision, model_f1, time_taken)
