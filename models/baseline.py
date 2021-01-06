@@ -52,7 +52,7 @@ def evaluate(real, pred):
     fig, ax = plt.subplots(figsize=(10, 7))
     sn.heatmap(df_cm, annot=True, fmt='')
 
-    ax.set_title("Logistic Regression - Confusion Matrix\n")
+    ax.set_title("Baseline - Confusion Matrix\n")
     ax.xaxis.tick_top()
     plt.show()
 
