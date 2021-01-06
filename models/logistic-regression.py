@@ -94,7 +94,7 @@ def evaluate(real, pred):
     roc_auc = auc(fpr, tpr)
 
     # plot roc curve
-    plt.title('Receiver Operating Characteristic')
+    plt.title('Logistic Regression - ROC Curves')
     plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
     plt.legend(loc='lower right')
     plt.plot([0, 1], [0, 1], 'r--')
