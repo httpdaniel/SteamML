@@ -122,9 +122,6 @@ def get_results(acc, aucs, rec, prec, f1s, total_time):
     print(result, file=open('../results/NaiveBayes_Results.txt', 'w'))
 
 
-# {'mnb__alpha': 1, 'tfidf__max_df': 0.5, 'tfidf__max_features': None, 'tfidf__ngram_range': (1, 2),
-# 'tfidf__use_idf': True}
-
 # vectorizer = CountVectorizer()
 vectorizer = TfidfVectorizer(max_df=0.5, max_features=None, ngram_range=(1, 2), use_idf=True)
 
