@@ -50,7 +50,7 @@ def random_search(x, y):
     return res, params
 
 
-# tune hyper-parameters using grid-validation
+# tune hyper-parameters using cross-validation - grid search
 def grid_search(x, y):
     clf = RandomForestClassifier()
     param_grid = {'max_depth': [35, 40, 45],
