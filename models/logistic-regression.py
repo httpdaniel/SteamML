@@ -1,12 +1,14 @@
 # import packages
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, recall_score, precision_score
+from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, recall_score, precision_score, \
+    roc_curve, f1_score, auc
 from scipy.sparse import csr_matrix, hstack
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sn
+import time
 
 
 # split data and vectorize review text
@@ -28,6 +30,20 @@ def get_data(csv, vect, target):
     return xtrain_final, xtest_final, ytrain, ytest
 
 
+# tune hyper-parameters using cross-validation
+def crossval(x, y):
+    clf = LogisticRegression(penalty='l2', max_iter=10000)
+    param_grid = {'C': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 3.7, 10, 100, 1000, 10000, 100000]}
+
+    gsearch = GridSearchCV(clf, param_grid, cv=5, scoring='accuracy', return_train_score=True, n_jobs=-1)
+
+    gsearch.fit(x, y)
+
+    res = gsearch.cv_results_
+    params = gsearch.best_params_
+    return res, params
+
+
 def evaluate(real, pred):
     # compute auc score
     aucscore = roc_auc_score(real, pred)
@@ -38,12 +54,16 @@ def evaluate(real, pred):
     print("Accuracy Score: ", accscore, "\n")
 
     # recall
-    recall = recall_score(real, pred, average=None)
+    recall = recall_score(real, pred, average='weighted', zero_division=0)
     print("Recall: ", recall, "\n")
 
     # precision
-    precision = precision_score(real, pred, average=None, zero_division=0)
+    precision = precision_score(real, pred, average='weighted', zero_division=0)
     print("Precision: ", precision, "\n")
+
+    # F1
+    f1 = f1_score(real, pred, average='weighted', zero_division=0)
+    print("F1: ", f1, "\n")
 
     # find values for confusion matrix
     tn, fp, fn, tp = confusion_matrix(real, pred).ravel()
@@ -70,18 +90,60 @@ def evaluate(real, pred):
     print("Specificity: ", (tn / (tn + fp)))
     print("False Positive Rate: ", (fp / (fp + tn)))
 
+    fpr, tpr, threshold = roc_curve(real, pred)
+    roc_auc = auc(fpr, tpr)
 
+    # plot roc curve
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.show()
+
+    return accscore, aucscore, recall, precision, f1
+
+
+def get_results(acc, aucs, rec, prec, f1s, total_time):
+    res = {'Accuracy': acc,
+           'AUC Score': aucs,
+           'Recall': rec,
+           'Precision': prec,
+           'F1': f1s,
+           'Time Taken': total_time
+           }
+
+    res_df = pd.DataFrame([res], columns=['Accuracy', 'AUC Score', 'Recall', 'Precision', 'F1', 'Time Taken'])
+    result = res_df.to_string()
+
+    print(result, file=open('../results/LogisticRegression_Results.txt', 'w'))
+
+
+# {'lr__C': 3.727593720314938, 'lr__penalty': 'l2', 'tfidf__max_df': 0.5, 'tfidf__max_features': None,
+# 'tfidf__ngram_range': (1, 1), 'tfidf__sublinear_tf': False, 'tfidf__use_idf': True
 # vectorizer = CountVectorizer()
-vectorizer = TfidfVectorizer(min_df=5, ngram_range=[1, 3])
+vectorizer = TfidfVectorizer(max_df=0.5, max_features=None, ngram_range=[1, 1], sublinear_tf=False, use_idf=True)
 
 X_train, X_test, y_train, y_test = get_data('../data/transformed_reviews.csv', vectorizer, 'Recommended')
 
-# fit model
-model = LogisticRegression(max_iter=10000)
+# cross-validation
+results, best_params = crossval(X_train, y_train)
+
+# final model
+start_time = time.time()
+model = LogisticRegression(penalty='l2', max_iter=10000, C=best_params["C"])
 model.fit(X_train, y_train)
 
 # make predictions
 predictions = model.predict(X_test)
+end_time = time.time()
+time_taken = end_time - start_time
 
 # evaluate results
-evaluate(y_test, predictions)
+acc_score, auc_score, model_recall, model_precision, model_f1 = evaluate(y_test, predictions)
+
+# print results to file
+get_results(acc_score, auc_score, model_recall, model_precision, model_f1, time_taken)
