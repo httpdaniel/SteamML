@@ -1,2 +1,2 @@
-   Accuracy  AUC Score    Recall  Precision  Time Taken
-0  0.702667   0.704705  0.702667   0.711056    0.004064
+   Accuracy  AUC Score    Recall  Precision        F1  Time Taken
+0  0.710667   0.711749  0.710667   0.713687  0.710245    0.016508
